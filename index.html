@@ -3,15 +3,20 @@
 <head>
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1" />
-<title>Cow Blink</title>
+<title>Cow Blink & Eat</title>
 <style>
   body {
     margin: 0;
     min-height: 100vh;
-    display: grid;
-    place-items: center;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
     background: #111;
+    color: #fff;
+    font-family: sans-serif;
   }
+
   .eye {
     width: min(80vw, 320px);
     aspect-ratio: 1 / 1;
@@ -28,6 +33,36 @@
   .eye img.active {
     display: block;
   }
+
+  .food-bar {
+    width: 80%;
+    max-width: 300px;
+    height: 20px;
+    border: 2px solid #fff;
+    border-radius: 10px;
+    margin-top: 20px;
+    background: #333;
+    overflow: hidden;
+  }
+  .food-fill {
+    height: 100%;
+    width: 50%; /* starts half full */
+    background: limegreen;
+    transition: width 0.3s;
+  }
+
+  button.feed {
+    margin-top: 15px;
+    padding: 10px 20px;
+    font-size: 16px;
+    border-radius: 6px;
+    border: none;
+    background: #4caf50;
+    color: #fff;
+  }
+  button.feed:active {
+    background: #388e3c;
+  }
 </style>
 </head>
 <body>
@@ -38,17 +73,27 @@
   <img id="closed" src="https://raw.githubusercontent.com/alikhanima/Cowblink/refs/heads/main/IMG_1635.jpeg" alt="Eye closed">
 </div>
 
+<div class="food-bar">
+  <div class="food-fill" id="foodFill"></div>
+</div>
+
+<button class="feed" onclick="feedCow()">Feed Cow 🍀</button>
+
 <script>
   const openEye   = document.getElementById("open");
   const halfEye   = document.getElementById("half");
   const closedEye = document.getElementById("closed");
   const eye       = document.getElementById("eye");
+  const foodFill  = document.getElementById("foodFill");
+
+  let foodLevel = 50; // start at 50%
 
   function show(frame) {
     [openEye, halfEye, closedEye].forEach(img => img.classList.remove("active"));
     frame.classList.add("active");
   }
 
+  // Blink sequence
   function blinkOnce() {
     if (eye.classList.contains("blinking")) return;
     eye.classList.add("blinking");
@@ -62,9 +107,9 @@
           show(openEye);
           eye.classList.remove("blinking");
           scheduleNextBlink();
-        }, 100); // half → open
-      }, 200); // closed → half
-    }, 100); // half → closed
+        }, 120);
+      }, 200);
+    }, 120);
   }
 
   function scheduleNextBlink(min = 2000, max = 7000) {
@@ -73,7 +118,39 @@
     scheduleNextBlink._t = setTimeout(blinkOnce, wait);
   }
 
-  // Click/touch to blink
+  // Eating sequence (loop chewing a few times)
+  function eatFood() {
+    let chews = 3;
+    function chew() {
+      show(halfEye);
+      setTimeout(() => {
+        show(closedEye);
+        setTimeout(() => {
+          show(openEye);
+          chews--;
+          if (chews > 0) {
+            setTimeout(chew, 200);
+          }
+        }, 200);
+      }, 200);
+    }
+    chew();
+  }
+
+  // Feed cow (button press)
+  function feedCow() {
+    foodLevel = Math.min(100, foodLevel + 10);
+    foodFill.style.width = foodLevel + "%";
+    eatFood();
+  }
+
+  // Food slowly decreases over time
+  setInterval(() => {
+    foodLevel = Math.max(0, foodLevel - 1);
+    foodFill.style.width = foodLevel + "%";
+  }, 3000); // every 3 seconds, food goes down by 1%
+
+  // Tap to blink manually
   eye.addEventListener("click", blinkOnce);
   eye.addEventListener("touchstart", e => { e.preventDefault(); blinkOnce(); }, {passive:false});
 
