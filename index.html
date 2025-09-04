@@ -12,54 +12,60 @@
     place-items: center;
     background: #111;
   }
-
   .eye {
     width: min(80vw, 320px);
     aspect-ratio: 1 / 1;
     position: relative;
   }
-
   .eye img {
     position: absolute;
     inset: 0;
     width: 100%;
     height: 100%;
     object-fit: contain;
-    display: none; /* only one frame visible at a time */
+    display: none;
   }
-
-  .eye .open { display: block; }
-
-  /* Blink animations */
-  .eye.do-blink .open   { animation: openPhase   300ms steps(1) forwards; }
-  .eye.do-blink .half   { animation: halfPhase   300ms steps(1) forwards; }
-  .eye.do-blink .closed { animation: closedPhase 300ms steps(1) forwards; }
-
-  @keyframes openPhase   { 0%,39%,100% {display:block} 40%,60%,80% {display:none} }
-  @keyframes halfPhase   { 0%,39%,60%,80%,100% {display:none} 40%,59%,79% {display:block} }
-  @keyframes closedPhase { 0%,59%,79%,100% {display:none} 60% {display:block} }
+  .eye img.active {
+    display: block;
+  }
 </style>
 </head>
 <body>
 
 <div class="eye" id="eye">
-  <img class="open"   src="https://raw.githubusercontent.com/alikhanima/Cowblink/refs/heads/main/IMG_1634.jpeg" alt="Eye open">
-  <img class="half"   src="https://raw.githubusercontent.com/alikhanima/Cowblink/refs/heads/main/IMG_1636.jpeg" alt="Eye half-open">
-  <img class="closed" src="https://raw.githubusercontent.com/alikhanima/Cowblink/refs/heads/main/IMG_1635.jpeg" alt="Eye closed">
+  <img id="open"   src="https://raw.githubusercontent.com/alikhanima/Cowblink/refs/heads/main/IMG_1634.jpeg" alt="Eye open"   class="active">
+  <img id="half"   src="https://raw.githubusercontent.com/alikhanima/Cowblink/refs/heads/main/IMG_1636.jpeg" alt="Eye half-open">
+  <img id="closed" src="https://raw.githubusercontent.com/alikhanima/Cowblink/refs/heads/main/IMG_1635.jpeg" alt="Eye closed">
 </div>
 
 <script>
-  const eye = document.getElementById('eye');
+  const openEye   = document.getElementById("open");
+  const halfEye   = document.getElementById("half");
+  const closedEye = document.getElementById("closed");
+  const eye       = document.getElementById("eye");
 
-  function blinkOnce() {
-    if (eye.classList.contains('do-blink')) return;
-    eye.classList.add('do-blink');
+  function show(frame) {
+    [openEye, halfEye, closedEye].forEach(img => img.classList.remove("active"));
+    frame.classList.add("active");
   }
 
-  eye.addEventListener('animationend', () => {
-    eye.classList.remove('do-blink');
-    scheduleNextBlink();
-  });
+  function blinkOnce() {
+    if (eye.classList.contains("blinking")) return;
+    eye.classList.add("blinking");
+
+    show(halfEye);
+    setTimeout(() => {
+      show(closedEye);
+      setTimeout(() => {
+        show(halfEye);
+        setTimeout(() => {
+          show(openEye);
+          eye.classList.remove("blinking");
+          scheduleNextBlink();
+        }, 100); // half → open
+      }, 200); // closed → half
+    }, 100); // half → closed
+  }
 
   function scheduleNextBlink(min = 2000, max = 7000) {
     const wait = Math.floor(Math.random() * (max - min + 1)) + min;
@@ -67,9 +73,9 @@
     scheduleNextBlink._t = setTimeout(blinkOnce, wait);
   }
 
-  // Tap or touch to blink on demand
-  eye.addEventListener('click', blinkOnce);
-  eye.addEventListener('touchstart', e => { e.preventDefault(); blinkOnce(); }, {passive:false});
+  // Click/touch to blink
+  eye.addEventListener("click", blinkOnce);
+  eye.addEventListener("touchstart", e => { e.preventDefault(); blinkOnce(); }, {passive:false});
 
   // Start idle blinking
   scheduleNextBlink();
