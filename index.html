@@ -1,0 +1,73 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Cow Blink</title>
+<style>
+  body {
+    margin: 0;
+    min-height: 100vh;
+    display: grid;
+    place-items: center;
+    background: #111;
+  }
+  .eye {
+    width: min(80vw, 320px);
+    aspect-ratio: 1 / 1;
+    position: relative;
+  }
+  .eye img {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    object-fit: contain;
+    opacity: 0;
+    transition: opacity 80ms linear;
+  }
+  .eye .open { opacity: 1; }
+  .eye.do-blink .open  { animation: openPhase 300ms steps(1) forwards; }
+  .eye.do-blink .half  { animation: halfPhase 300ms steps(1) forwards; }
+  .eye.do-blink .closed{ animation: closedPhase 300ms steps(1) forwards; }
+
+  @keyframes openPhase   { 0%{opacity:1} 39%{opacity:1} 40%{opacity:0} 100%{opacity:1} }
+  @keyframes halfPhase   { 0%{opacity:0} 39%{opacity:0} 40%{opacity:1} 59%{opacity:1} 60%{opacity:0} 80%{opacity:0} 100%{opacity:0} }
+  @keyframes closedPhase { 0%{opacity:0} 59%{opacity:0} 60%{opacity:1} 79%{opacity:0} 100%{opacity:0} }
+</style>
+</head>
+<body>
+
+<div class="eye" id="eye">
+  <img class="open"   src="https://raw.githubusercontent.com/alikhanima/Cowblink/refs/heads/main/IMG_1634.jpeg" alt="Eye open">
+  <img class="half"   src="https://raw.githubusercontent.com/alikhanima/Cowblink/refs/heads/main/IMG_1636.jpeg" alt="Eye half-open">
+  <img class="closed" src="https://raw.githubusercontent.com/alikhanima/Cowblink/refs/heads/main/IMG_1635.jpeg" alt="Eye closed">
+</div>
+
+<script>
+  const eye = document.getElementById('eye');
+
+  function blinkOnce() {
+    if (eye.classList.contains('do-blink')) return;
+    eye.classList.add('do-blink');
+  }
+
+  eye.addEventListener('animationend', (e) => {
+    if (!['openPhase','halfPhase','closedPhase'].includes(e.animationName)) return;
+    requestAnimationFrame(() => eye.classList.remove('do-blink'));
+    scheduleNextBlink();
+  });
+
+  function scheduleNextBlink(min = 2000, max = 7000) {
+    const wait = Math.floor(Math.random() * (max - min + 1)) + min;
+    clearTimeout(scheduleNextBlink._t);
+    scheduleNextBlink._t = setTimeout(blinkOnce, wait);
+  }
+
+  eye.addEventListener('click', blinkOnce);
+  eye.addEventListener('touchstart', (e) => { e.preventDefault(); blinkOnce(); }, {passive:false});
+
+  scheduleNextBlink();
+</script>
+</body>
+</html>
