@@ -17,12 +17,12 @@
     font-family: sans-serif;
   }
 
-  .eye {
+  .cow {
     width: min(80vw, 320px);
     aspect-ratio: 1 / 1;
     position: relative;
   }
-  .eye img {
+  .cow img {
     position: absolute;
     inset: 0;
     width: 100%;
@@ -30,7 +30,7 @@
     object-fit: contain;
     display: none;
   }
-  .eye img.active {
+  .cow img.active {
     display: block;
   }
 
@@ -67,10 +67,16 @@
 </head>
 <body>
 
-<div class="eye" id="eye">
-  <img id="open"   src="https://raw.githubusercontent.com/alikhanima/Cowblink/refs/heads/main/IMG_1634.jpeg" alt="Eye open"   class="active">
-  <img id="half"   src="https://raw.githubusercontent.com/alikhanima/Cowblink/refs/heads/main/IMG_1636.jpeg" alt="Eye half-open">
-  <img id="closed" src="https://raw.githubusercontent.com/alikhanima/Cowblink/refs/heads/main/IMG_1635.jpeg" alt="Eye closed">
+<div class="cow" id="cow">
+  <!-- Blink frames -->
+  <img id="open"   src="https://raw.githubusercontent.com/alikhanima/Cowblink/refs/heads/main/IMG_1634.jpeg" class="active" alt="Open eye">
+  <img id="half"   src="https://raw.githubusercontent.com/alikhanima/Cowblink/refs/heads/main/IMG_1636.jpeg" alt="Half eye">
+  <img id="closed" src="https://raw.githubusercontent.com/alikhanima/Cowblink/refs/heads/main/IMG_1635.jpeg" alt="Closed eye">
+
+  <!-- Eating frames -->
+  <img id="eat1" src="https://raw.githubusercontent.com/alikhanima/Cowblink/refs/heads/main/IMG_1637.jpeg" alt="Eat step 1">
+  <img id="eat2" src="https://raw.githubusercontent.com/alikhanima/Cowblink/refs/heads/main/IMG_1638.jpeg" alt="Eat step 2">
+  <img id="eat3" src="https://raw.githubusercontent.com/alikhanima/Cowblink/refs/heads/main/IMG_1639.jpeg" alt="Eat step 3">
 </div>
 
 <div class="food-bar">
@@ -83,20 +89,26 @@
   const openEye   = document.getElementById("open");
   const halfEye   = document.getElementById("half");
   const closedEye = document.getElementById("closed");
-  const eye       = document.getElementById("eye");
+  const eat1      = document.getElementById("eat1");
+  const eat2      = document.getElementById("eat2");
+  const eat3      = document.getElementById("eat3");
+
+  const cow       = document.getElementById("cow");
   const foodFill  = document.getElementById("foodFill");
 
   let foodLevel = 50; // start at 50%
+  let eating = false;
 
   function show(frame) {
-    [openEye, halfEye, closedEye].forEach(img => img.classList.remove("active"));
+    [openEye, halfEye, closedEye, eat1, eat2, eat3]
+      .forEach(img => img.classList.remove("active"));
     frame.classList.add("active");
   }
 
   // Blink sequence
   function blinkOnce() {
-    if (eye.classList.contains("blinking")) return;
-    eye.classList.add("blinking");
+    if (cow.classList.contains("blinking") || eating) return;
+    cow.classList.add("blinking");
 
     show(halfEye);
     setTimeout(() => {
@@ -105,7 +117,7 @@
         show(halfEye);
         setTimeout(() => {
           show(openEye);
-          eye.classList.remove("blinking");
+          cow.classList.remove("blinking");
           scheduleNextBlink();
         }, 120);
       }, 200);
@@ -113,28 +125,27 @@
   }
 
   function scheduleNextBlink(min = 2000, max = 7000) {
+    if (eating) return; // don't blink while eating
     const wait = Math.floor(Math.random() * (max - min + 1)) + min;
     clearTimeout(scheduleNextBlink._t);
     scheduleNextBlink._t = setTimeout(blinkOnce, wait);
   }
 
-  // Eating sequence (loop chewing a few times)
+  // Eating sequence: 1637 -> 1638 -> 1639 -> back to open
   function eatFood() {
-    let chews = 3;
-    function chew() {
-      show(halfEye);
+    eating = true;
+    show(eat1);
+    setTimeout(() => {
+      show(eat2);
       setTimeout(() => {
-        show(closedEye);
+        show(eat3);
         setTimeout(() => {
           show(openEye);
-          chews--;
-          if (chews > 0) {
-            setTimeout(chew, 200);
-          }
-        }, 200);
-      }, 200);
-    }
-    chew();
+          eating = false;
+          scheduleNextBlink();
+        }, 400);
+      }, 400);
+    }, 400);
   }
 
   // Feed cow (button press)
@@ -146,13 +157,15 @@
 
   // Food slowly decreases over time
   setInterval(() => {
-    foodLevel = Math.max(0, foodLevel - 1);
-    foodFill.style.width = foodLevel + "%";
+    if (!eating) {
+      foodLevel = Math.max(0, foodLevel - 1);
+      foodFill.style.width = foodLevel + "%";
+    }
   }, 3000); // every 3 seconds, food goes down by 1%
 
   // Tap to blink manually
-  eye.addEventListener("click", blinkOnce);
-  eye.addEventListener("touchstart", e => { e.preventDefault(); blinkOnce(); }, {passive:false});
+  cow.addEventListener("click", blinkOnce);
+  cow.addEventListener("touchstart", e => { e.preventDefault(); blinkOnce(); }, {passive:false});
 
   // Start idle blinking
   scheduleNextBlink();
